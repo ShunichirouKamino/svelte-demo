@@ -6,7 +6,10 @@
   import ThemeToggle from '$lib/components/ThemeToggle.svelte';
   import { getTodos } from '$lib/stores/todo.svelte';
 
-  // Svelte 5: $effect でコンポーネント内の副作用を管理
+  // $effect はコンポーネントのマウント後に必ず1回実行される。
+  // この $effect 内では $state を「書き込み」しているだけで「読み取り」はしていないため、
+  // 追跡する依存はゼロ → 初回マウント時に1回だけ実行され再実行はされない。
+  // （マウント検知だけなら onMount でも可。ここでは $effect のデモとして使用）
   let mounted = $state(false);
   $effect(() => {
     mounted = true;

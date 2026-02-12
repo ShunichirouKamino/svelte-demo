@@ -22,23 +22,24 @@ Svelte を触ったことがない方を対象に、本サンプルアプリの�
   - [Q11. `{#each}` ブロックの `(todo.id)` は何の意味？](#q11-each-ブロックの-todoid-は何の意味)
   - [Q12. Snippets (`{#snippet}` / `{@render}`) って何？コンポーネントとの使い分けは？](#q12-snippets-snippet--render-って何コンポーネントとの使い分けは)
 - [ファイル構成・SvelteKit](#ファイル構成sveltekit)
-  - [Q13. `.svelte.ts` と普通の `.ts` ファイルは何が違う？](#q13-sveltets-と普通の-ts-ファイルは何が違う)
-  - [Q14. `$lib` って何？ なぜ `'$lib/stores/todo.svelte'` のようにインポートする？](#q14-lib-って何-なぜ-libstorestodosvelte-のようにインポートする)
-  - [Q15. `+page.svelte` や `+layout.svelte` のファイル名の `+` は何？](#q15-pagesvelte-や-layoutsvelte-のファイル名の--は何)
-  - [Q16. React のように `index.tsx` をエントリーポイントにしないのはなぜ？](#q16-react-のように-indextsx-をエントリーポイントにしないのはなぜ)
+  - [Q13. Svelte と SvelteKit は何が違う？](#q13-svelte-と-sveltekit-は何が違う)
+  - [Q14. `.svelte.ts` と普通の `.ts` ファイルは何が違う？](#q14-sveltets-と普通の-ts-ファイルは何が違う)
+  - [Q15. `$lib` って何？ なぜ `'$lib/stores/todo.svelte'` のようにインポートする？](#q15-lib-って何-なぜ-libstorestodosvelte-のようにインポートする)
+  - [Q16. `+page.svelte` や `+layout.svelte` のファイル名の `+` は何？](#q16-pagesvelte-や-layoutsvelte-のファイル名の--は何)
+  - [Q17. React のように `index.tsx` をエントリーポイントにしないのはなぜ？](#q17-react-のように-indextsx-をエントリーポイントにしないのはなぜ)
 - [スタイリング](#スタイリング)
-  - [Q17. `<style>` に書いた CSS が他のコンポーネントに影響しないのはなぜ？](#q17-style-に書いた-css-が他のコンポーネントに影響しないのはなぜ)
-  - [Q18. `:global()` って何？ いつ使う？](#q18-global-って何-いつ使う)
-  - [Q19. `style="--accent: {color}"` のように CSS 変数を動的に設定しているのは何？](#q19-style--accent-color-のように-css-変数を動的に設定しているのは何)
+  - [Q18. `<style>` に書いた CSS が他のコンポーネントに影響しないのはなぜ？](#q18-style-に書いた-css-が他のコンポーネントに影響しないのはなぜ)
+  - [Q19. `:global()` って何？ いつ使う？](#q19-global-って何-いつ使う)
+  - [Q20. `style="--accent: {color}"` のように CSS 変数を動的に設定しているのは何？](#q20-style--accent-color-のように-css-変数を動的に設定しているのは何)
 - [トランジション・アニメーション](#トランジションアニメーション)
-  - [Q20. `transition:slide` だけでアニメーションが動くのはなぜ？](#q20-transitionslide-だけでアニメーションが動くのはなぜ)
+  - [Q21. `transition:slide` だけでアニメーションが動くのはなぜ？](#q21-transitionslide-だけでアニメーションが動くのはなぜ)
 - [状態管理パターン](#状態管理パターン)
-  - [Q21. Redux や Zustand のような状態管理ライブラリは不要？](#q21-redux-や-zustand-のような状態管理ライブラリは不要)
-  - [Q22. `getTodos()` のように関数で値を返しているのはなぜ？ 変数を直接 export しないの？](#q22-gettodos-のように関数で値を返しているのはなぜ-変数を直接-export-しないの)
-  - [Q23. `todos.push(...)` でミュータブルに変更しているのに、なぜ UI が更新される？](#q23-todospush-でミュータブルに変更しているのになぜ-ui-が更新される)
+  - [Q22. Redux や Zustand のような状態管理ライブラリは不要？](#q22-redux-や-zustand-のような状態管理ライブラリは不要)
+  - [Q23. `getTodos()` のように関数で値を返しているのはなぜ？ 変数を直接 export しないの？](#q23-gettodos-のように関数で値を返しているのはなぜ-変数を直接-export-しないの)
+  - [Q24. `todos.push(...)` でミュータブルに変更しているのに、なぜ UI が更新される？](#q24-todospush-でミュータブルに変更しているのになぜ-ui-が更新される)
 - [開発体験・ツーリング](#開発体験ツーリング)
-  - [Q24. TypeScript は使える？ 設定は必要？](#q24-typescript-は使える-設定は必要)
-  - [Q25. React から移行する場合、学習コストはどのくらい？](#q25-react-から移行する場合学習コストはどのくらい)
+  - [Q25. TypeScript は使える？ 設定は必要？](#q25-typescript-は使える-設定は必要)
+  - [Q26. React から移行する場合、学習コストはどのくらい？](#q26-react-から移行する場合学習コストはどのくらい)
 
 ---
 
@@ -163,15 +164,30 @@ React の `useMemo` で起きがちな「依存配列に入れ忘れて古い値
 
 **1. 依存配列が不要**
 
-`+page.svelte` の例:
+`theme.svelte.ts` の例:
+
+```ts
+let dark = $state(false);
+
+// dark を「読み取って」いるため、dark が変わるたびに再実行される
+// React の useEffect なら useEffect(() => {...}, [dark]) と書くところ
+$effect.root(() => {
+  $effect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+  });
+});
+```
+
+なお、`$effect` 内で `$state` を**読み取らず書き込みだけ**している場合、その変数は依存として追跡されません。`+page.svelte` の以下のコードは `mounted` を書き込んでいるだけなので、初回マウント時に1回だけ実行されます:
 
 ```svelte
 let mounted = $state(false);
 
-// mounted を参照しているが、依存配列の指定は不要
+// mounted は「書き込み」のみで「読み取り」していない → 依存ゼロ → 初回のみ実行
 $effect(() => {
   mounted = true;
-  console.log('App mounted - タスク管理アプリが起動しました');
+  console.log('App mounted');
 });
 ```
 
@@ -407,7 +423,59 @@ React では同等の処理をローカル関数やインラインの JSX 変数
 
 ## ファイル構成・SvelteKit
 
-### Q13. `.svelte.ts` と普通の `.ts` ファイルは何が違う？
+### Q13. Svelte と SvelteKit は何が違う？
+
+Svelte のエコシステムに初めて触れると「Svelte」と「SvelteKit」の2つの名前が出てきて混乱しがちですが、役割は明確に分かれています。
+
+| | Svelte | SvelteKit |
+|---|---|---|
+| **何か** | UI コンポーネントフレームワーク + コンパイラ | Svelte ベースのアプリケーションフレームワーク |
+| **担当範囲** | コンポーネントの記述・リアクティビティ・DOM 更新 | ルーティング・SSR・ビルド・デプロイ |
+| **React での対応** | React 本体 | Next.js / Remix |
+| **単体で使えるか** | 使える（Vite + Svelte で SPA 構築可能） | Svelte が必須（SvelteKit 単体では動かない） |
+
+図で表すと、SvelteKit は Svelte を内包する上位層です:
+
+```
+┌─────────────────────────────────────────────┐
+│  SvelteKit（アプリケーションフレームワーク）       │
+│                                             │
+│  ・ファイルベースルーティング（+page.svelte）   │
+│  ・レイアウト（+layout.svelte → children）    │
+│  ・SSR / SSG / SPA 切り替え                  │
+│  ・$lib エイリアス                            │
+│  ・アダプター（Vercel / Node / 静的出力）      │
+│                                             │
+│  ┌─────────────────────────────────────┐    │
+│  │  Svelte（UIフレームワーク + コンパイラ）  │    │
+│  │                                     │    │
+│  │  ・.svelte コンポーネント             │    │
+│  │  ・Runes ($state, $derived, $effect) │    │
+│  │  ・テンプレート構文 ({#each}, {#if})   │    │
+│  │  ・スコープ付き CSS                   │    │
+│  │  ・トランジション                     │    │
+│  └─────────────────────────────────────┘    │
+└─────────────────────────────────────────────┘
+```
+
+サンプルアプリのファイルで当てはめると:
+
+| ファイル / 機能 | 提供元 | 補足 |
+|---|---|---|
+| `$state`、`$derived`、`$effect`、`$props` | **Svelte** | Runes（コンパイラが処理） |
+| `{#each}`、`{#snippet}`、`transition:slide` | **Svelte** | テンプレート構文 |
+| `<style>` のスコーピング | **Svelte** | コンパイラが自動ハッシュ化 |
+| `.svelte.ts` でのリアクティビティ | **Svelte** | コンパイラが Runes を処理 |
+| `+page.svelte`、`+layout.svelte` | **SvelteKit** | ファイルベースルーティング |
+| `+layout.svelte` の `children` → `{@render children()}` | **SvelteKit** | ページ内容をレイアウトに注入 |
+| `$lib` エイリアス | **SvelteKit** | `src/lib/` へのショートカット |
+| `npm run dev` / `npm run build` | **SvelteKit** + Vite | 開発サーバーとビルド |
+
+**ポイント**: 本サンプルアプリで「これは Svelte の機能か、SvelteKit の機能か」がわからなくなったら、この表を参照してください。ブログ本編で解説している Runes やテンプレート構文は **Svelte** の領域であり、ファイル配置のルールやビルドの仕組みは **SvelteKit** の領域です。
+
+---
+
+### Q14. `.svelte.ts` と普通の `.ts` ファイルは何が違う？
 
 `.svelte.ts` ファイルは **Svelte コンパイラに処理される TypeScript ファイル**です。通常の `.ts` ファイルとの最大の違いは、**Runes（`$state`、`$derived`、`$effect`）が使える**ことです。
 
@@ -427,7 +495,7 @@ todo.ts        → 通常の TypeScript       → $state, $derived はエラー
 
 ---
 
-### Q14. `$lib` って何？ なぜ `'$lib/stores/todo.svelte'` のようにインポートする？
+### Q15. `$lib` って何？ なぜ `'$lib/stores/todo.svelte'` のようにインポートする？
 
 `$lib` は SvelteKit が提供する**パスエイリアス**で、`src/lib/` ディレクトリを指します。
 
@@ -444,7 +512,7 @@ import { getTodos } from '../../lib/stores/todo.svelte';  // 相対パス
 
 ---
 
-### Q15. `+page.svelte` や `+layout.svelte` のファイル名の `+` は何？
+### Q16. `+page.svelte` や `+layout.svelte` のファイル名の `+` は何？
 
 SvelteKit の **ファイルベースルーティング** の規約です。`+` プレフィックスは「SvelteKit が特別に扱うファイル」を意味します。
 
@@ -467,7 +535,7 @@ React（Next.js）の `page.tsx` や `layout.tsx` と同じ概念ですが、Sve
 
 ---
 
-### Q16. React のように `index.tsx` をエントリーポイントにしないのはなぜ？
+### Q17. React のように `index.tsx` をエントリーポイントにしないのはなぜ？
 
 SvelteKit はフレームワーク側がエントリーポイントを管理するため、開発者がエントリーファイルを意識する必要がありません。
 
@@ -499,7 +567,7 @@ src/app.html         ← HTML シェル（SvelteKit が自動注入）
 
 ## スタイリング
 
-### Q17. `<style>` に書いた CSS が他のコンポーネントに影響しないのはなぜ？
+### Q18. `<style>` に書いた CSS が他のコンポーネントに影響しないのはなぜ？
 
 Svelte はコンパイル時に **CSS セレクタを自動的にスコープ化** します。各コンポーネントの `<style>` 内のセレクタにユニークなハッシュ属性が付加されるため、他のコンポーネントには影響しません。
 
@@ -519,7 +587,7 @@ button.svelte-abc123 { padding: 0.5rem 1.2rem; }
 
 ---
 
-### Q18. `:global()` って何？ いつ使う？
+### Q19. `:global()` って何？ いつ使う？
 
 スコープ化を無効にし、**グローバルに CSS を適用する**ための修飾子です。
 
@@ -556,7 +624,7 @@ button.svelte-abc123 { padding: 0.5rem 1.2rem; }
 
 ---
 
-### Q19. `style="--accent: {color}"` のように CSS 変数を動的に設定しているのは何？
+### Q20. `style="--accent: {color}"` のように CSS 変数を動的に設定しているのは何？
 
 Svelte のテンプレート内で **CSS カスタムプロパティを動的にインラインで設定** しています。
 
@@ -590,7 +658,7 @@ Svelte のテンプレート内で **CSS カスタムプロパティを動的に
 
 ## トランジション・アニメーション
 
-### Q20. `transition:slide` だけでアニメーションが動くのはなぜ？
+### Q21. `transition:slide` だけでアニメーションが動くのはなぜ？
 
 Svelte は `svelte/transition` モジュールに**トランジション関数を組み込みで提供**しており、要素の追加・削除時に自動的にアニメーションを適用します。
 
@@ -626,7 +694,7 @@ React ではこれらすべてを Framer Motion や react-transition-group な�
 
 ## 状態管理パターン
 
-### Q21. Redux や Zustand のような状態管理ライブラリは不要？
+### Q22. Redux や Zustand のような状態管理ライブラリは不要？
 
 **多くのケースでは不要です。** Svelte 5 では `.svelte.ts` ファイルに `$state` と `$derived` を書くだけで、コンポーネント間で共有できるリアクティブな状態を作れます。
 
@@ -653,7 +721,7 @@ React で同等の仕組みを実現するには:
 
 ---
 
-### Q22. `getTodos()` のように関数で値を返しているのはなぜ？ 変数を直接 export しないの？
+### Q23. `getTodos()` のように関数で値を返しているのはなぜ？ 変数を直接 export しないの？
 
 Svelte 5 の Runes で宣言した変数を直接 `export` すると、**リアクティビティが失われる**ケースがあるためです。
 
@@ -671,7 +739,7 @@ export function getTodos() {
 
 ---
 
-### Q23. `todos.push(...)` でミュータブルに変更しているのに、なぜ UI が更新される？
+### Q24. `todos.push(...)` でミュータブルに変更しているのに、なぜ UI が更新される？
 
 Svelte 5 の `$state` で宣言された配列やオブジェクトは、内部的に **Proxy** でラップされています。そのため `.push()`、`.splice()` などのミュータブルな操作も変更として検知されます。
 
@@ -714,7 +782,7 @@ Svelte 5 ではミュータブルな操作が自然に書けるため、`...` �
 
 ## 開発体験・ツーリング
 
-### Q24. TypeScript は使える？ 設定は必要？
+### Q25. TypeScript は使える？ 設定は必要？
 
 **はい、ネイティブサポートされています。** プロジェクト作成時に `--types ts` を指定するだけで、追加の設定なしに TypeScript が使えます。
 
@@ -737,7 +805,7 @@ npm run check
 
 ---
 
-### Q25. React から移行する場合、学習コストはどのくらい？
+### Q26. React から移行する場合、学習コストはどのくらい？
 
 React 経験者が Svelte 5 に移行する際に新しく覚える必要がある概念を整理します。
 
